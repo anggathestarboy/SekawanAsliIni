@@ -14,7 +14,8 @@ class ProductModel extends Model
     protected $fillable = array(
         'product_name',
         'product_stock',
-        'product_price'
+        'product_price',
+        'product_category_id',
     );
 
     // Method untuk GET semua data Products

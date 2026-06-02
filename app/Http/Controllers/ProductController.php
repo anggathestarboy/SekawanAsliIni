@@ -5,31 +5,36 @@ namespace App\Http\Controllers;
 use App\Models\ProductModel;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 
 class ProductController extends Controller
 {
-    public function index () {
+   public function index () {
 		try {
-            $products = ProductModel::getProducts();
-            $response = array(
-                'success' => true,
-                'message' => 'Successfully get products data.',
-                'data' => $products
-            );
+        $products = Cache::remember('products', 60*60*24, function () {
+            return ProductModel::getProducts()->toArray();
+        });
 
-            return response()->json($response, 200);
-        } catch (Exception $error) {
-            $response = array(
-                'success' => false,
-                'message' => 'Sorry, there error in internal server',
-                'data' => null,
-                'errors' => $error->getMessage()
-            );
+        $response = [
+            'success' => true,
+            'message' => 'Successfully get products data.',
+            'data' => $products
+      ];
 
-            return response()->json($response, 500);
-        }
-	}
+        return response()->json($response, 200)
+        ->header('Cache-Control', 'public, max-age=300');
+    } catch (Exception $error) {
+        $response = array(
+            'success' => false,
+            'message' => 'Sorry, there error in internal server',
+            'data' => null,
+            'errors' => $error->getMessage()
+        );
+
+        return response()->json($response, 500);
+    }
+}
 	
 	public function show (int $product_id) {
 		try {
@@ -58,7 +63,8 @@ class ProductController extends Controller
             $validator = Validator::make($request->all(), [
                 'product_name' => 'required|string|max:100',
                 'product_stock' => 'required|numeric',
-                'product_price' => 'required|numeric'
+                'product_price' => 'required|numeric',
+                'product_category_id' => 'required'
             ]);
 
             if ($validator->fails()) {
@@ -97,7 +103,8 @@ class ProductController extends Controller
             $validator = Validator::make($request->all(), [
                 'product_name' => 'required|string|max:100',
                 'product_stock' => 'required|numeric',
-                'product_price' => 'required|numeric'
+                'product_price' => 'required|numeric',
+                'product_category_id' => 'required'
             ]);
 
             if ($validator->fails()) {
