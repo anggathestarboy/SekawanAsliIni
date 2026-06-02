@@ -23,7 +23,7 @@ class ProductCategoryModel extends Model
      public static function getProductCategoryById (int $category_id) {
         $category = self::find($category_id);
 
-        return $category_id;
+        return $category;
     }
 
 

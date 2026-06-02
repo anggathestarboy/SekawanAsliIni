@@ -36,27 +36,31 @@ class ProductController extends Controller
     }
 }
 	
-	public function show (int $product_id) {
-		try {
-            $products = ProductModel::getProductById($product_id);
-            $response = array(
+public function show (int $product_id) {
+        try {
+            $cacheKey = 'product_'.$product_id;
+            $products = Cache::remember($cacheKey, 60*60*24, function () use ($product_id) {
+                return ProductModel::getProductById($product_id)?->toArray();
+            });
+    
+            $response = [
                 'success' => true,
                 'message' => 'Successfully get products data.',
                 'data' => $products
-            );
-
+            ];
+    
             return response()->json($response, 200);
         } catch (Exception $error) {
-            $response = array(
+            $response = [
                 'success' => false,
                 'message' => 'Sorry, there error in internal server',
                 'data' => null,
                 'errors' => $error->getMessage()
-            );
-
+            ];
+    
             return response()->json($response, 500);
         }
-	}
+    }
 	
 	public function store (Request $request) {
 		try {
@@ -79,6 +83,7 @@ class ProductController extends Controller
             }
 
             $product = ProductModel::createProduct($validator->validated());
+            Cache::put('products', ProductModel::getProducts()->toArray(), 60*60*24);
             $response = array(
                 'success' => true,
                 'message' => 'Successfully create product data',
@@ -119,6 +124,8 @@ class ProductController extends Controller
             }
 
             $product = ProductModel::updateProduct($product_id, $validator->validated());
+            Cache::put('products', ProductModel::getProducts()->toArray(), 60*60*24);
+        Cache::forget('product_'.$product_id);
             $response = array(
                 'success' => true,
                 'message' => 'Successfully update product data',
@@ -141,6 +148,8 @@ class ProductController extends Controller
 	public function destroy (int $product_id) {
 		try {
             $product = ProductModel::deleteProduct($product_id);
+             Cache::put('products', ProductModel::getProducts()->toArray(), 60*60*24);
+        Cache::forget('product_'.$product_id);
             $response = array(
                 'success' => true,
                 'message' => 'Successfully delete product data',

@@ -6,6 +6,7 @@ use App\Models\ProductCategoryModel;
 use App\Models\ProductModel;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Validator;
 
 class ProductCategoriesController extends Controller
@@ -17,14 +18,18 @@ class ProductCategoriesController extends Controller
     {
 
     try {
-         $categories = ProductCategoryModel::getCategories();
+       $categories = Cache::remember("categories", 60*5, function() {
+          return ProductCategoryModel::getCategories()->toArray();
+        });
+        
          $response = array(
                 'success' => true,
                 'message' => 'Successfully get product categories data.',
                 'data' => $categories
             );
 
-              return response()->json($response, 200);
+                return response()->json($response, 200)
+        ->header('Cache-Control', 'public, max-age=300');
     } catch (Exception $error) {
             $response = array(
                 'success' => false,
@@ -67,6 +72,7 @@ class ProductCategoriesController extends Controller
             }
 
             $product = ProductCategoryModel::createProductCategory($validator->validated());
+            Cache::put('categories', ProductCategoryModel::getCategories()->toArray(), 60*5);
             $response = array(
                 'success' => true,
                 'message' => 'Successfully create product category data',
@@ -91,7 +97,14 @@ class ProductCategoriesController extends Controller
      */
    public function show (int $category_id) {
 		try {
-            $category = ProductCategoryModel::getProductCategoryById($category_id);
+             $cacheKey = 'category_'.$category_id;
+
+   $category =  Cache::remember($cacheKey, 60*5, function () use ($category_id) {
+                return ProductCategoryModel::getProductCategoryById($category_id);
+            });
+    
+
+            
             $response = array(
                 'success' => true,
                 'message' => 'Successfully get products Category data.',
@@ -139,6 +152,8 @@ public function update (Request $request, int $category_id) {
             }
 
             $product = ProductCategoryModel::updateProductCategory($category_id, $validator->validated());
+            Cache::put('categories', ProductCategoryModel::getCategories()->toArray(), 60*5);
+             Cache::forget('category_'.$category_id);
             $response = array(
                 'success' => true,
                 'message' => 'Successfully update product category data',
@@ -164,6 +179,8 @@ public function update (Request $request, int $category_id) {
    	public function destroy (int $category_id) {
 		try {
             $product = ProductCategoryModel::deleteProductCategory($category_id);
+              Cache::put('categories', ProductCategoryModel::getCategories()->toArray(), 60*5);
+             Cache::forget('category_'.$category_id);
             $response = array(
                 'success' => true,
                 'message' => 'Successfully delete product category data',

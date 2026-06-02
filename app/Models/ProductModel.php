@@ -48,10 +48,15 @@ class ProductModel extends Model
     }
 
     // Method untuk DELETE (delete) data Product
-    public static function deleteProduct (int $product_id) {
-        $product = self::find($product_id);
-        $product->destroy($product);
+   public static function deleteProduct (int $product_id) {
+    $product = self::find($product_id);
 
-        return $product;
+    if (!$product) {
+        return null;
     }
+
+    $product->delete();
+
+    return $product;
+}
 }
