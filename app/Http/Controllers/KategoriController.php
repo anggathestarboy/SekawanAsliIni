@@ -97,9 +97,12 @@ class KategoriController extends Controller
 
         try {
         
-            $kategori = Cache::remember('kategori_' . $kategori_id, 60 * 60 * 24, function () use ($kategori_id) {
-                return Kategori::getDetail($kategori_id);
 
+
+
+            $kategori = Cache::remember('kategori_' . $kategori_id, 60 * 60 * 24, function () use ($kategori_id) {
+                $detail = Kategori::getDetail($kategori_id);
+                return $detail ? $detail->toArray() : null;
             });
 
           

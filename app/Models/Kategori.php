@@ -16,7 +16,10 @@ class Kategori extends Model
 
     public static function getDetail(int $kategori_id)
     {
+
+
         $kategori = self::find($kategori_id);
+        
         return $kategori;
     }
 }
