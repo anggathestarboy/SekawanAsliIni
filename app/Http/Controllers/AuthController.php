@@ -79,4 +79,22 @@ class AuthController extends Controller
             ], 500);
         }
     }
+
+    public function logout()
+    {
+        try {
+            Auth::logout();
+            return response()->json([
+                "success" => true,
+                "message" => "Successfully logged out"
+            ]);
+        } catch (Exception $exception) {
+            return response()->json([
+                "success" => false,
+                "message" => "There error in Internal Server",
+                "data" => null,
+                "errors" => $exception->getMessage()
+            ], 500);
+        }
+    }
 }

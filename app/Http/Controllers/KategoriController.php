@@ -68,11 +68,9 @@ class KategoriController extends Controller
 
 
             $kategori = Kategori::create($request->all());
-            Cache::put(
-                'kategori',
-                Kategori::all()->toArray(),
-                60 * 60 * 24
-            );
+            
+            Cache::forget('kategori');
+            
             return response()->json([
                 "success" => true,
                 "message" => "berhasil buat kategori",
@@ -139,7 +137,29 @@ class KategoriController extends Controller
      */
     public function update(Request $request, Kategori $kategori)
     {
-        //
+        try {
+            $request->validate([
+                "kategori_nama" => "required",
+            ]);
+
+            $kategori->update($request->all());
+
+            Cache::forget('kategori');
+            Cache::forget('kategori_' . $kategori->kategori_id);
+
+            return response()->json([
+                "success" => true,
+                "message" => "berhasil update kategori",
+                "data" => $kategori
+            ]);
+        } catch (Exception $exception) {
+            return response()->json([
+                "success" => false,
+                "message" => "There error in Internal Server",
+                "data" => null,
+                "errors" => $exception->getMessage()
+            ], 500);
+        }
     }
 
     /**
@@ -155,6 +175,7 @@ class KategoriController extends Controller
             Cache::forget('kategori');
 
             return response()->json([
+                "success" => true,
                 "message" => "berhasil di hapus",
                 "data" => $kategori
 
